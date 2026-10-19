@@ -1,0 +1,101 @@
+
+openapi: 3.1.0
+info:
+  title: IncuBrix PS3 Video Engine API
+  description: API for submitting scripts and generating voiceovers, with basic timeline and caption outputs.
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local development server
+
+paths:
+  /api/v1/broll/jobs:
+    post:
+      summary: Create a B-roll video job
+      description: Accepts a script and returns a job identifier and voiceover status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - script
+                - voice
+                - aspect_ratios
+                - style
+              properties:
+                script:
+                  type: string
+                  example: A student works hard every day to achieve their dreams.
+                voice:
+                  type: string
+                  example: en-IN-female
+                aspect_ratios:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - "16:9"
+                style:
+                  type: string
+                  example: bright, modern, real-world footage
+      responses:
+        "202":
+          description: Job accepted; voiceover generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: voiceover_ready
+                  audio_url:
+                    type: string
+                    example: /api/v1/jobs/{job_id}/audio
+                  message:
+                    type: string
+        "422":
+          description: Validation error
+
+  /api/v1/jobs/{job_id}:
+    get:
+      summary: Get job status
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Job information
+        "404":
+          description: Job not found
+
+  /api/v1/jobs/{job_id}/audio:
+    get:
+      summary: Download generated voiceover
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Generated MP3 audio
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Audio not found
